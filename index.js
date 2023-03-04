@@ -99,6 +99,12 @@ const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=
         return response.map((item) => item.doc_record);
     };
 
+    const querySumpopulation = `SELECT SUM(
+        CAST(jsonb_extract_path_text(doc_record, 'Population') AS INTEGER)
+    ) as total
+    FROM ${DATABASE_SCHEMA}.api_data
+    WHERE doc_record->>'Year' >= '2018' AND doc_record->>'Year' <= '2020';`
+
     try {
         await dropSchema();
         await migrationUp();
@@ -111,13 +117,7 @@ const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=
         const dataBanco = await findData();
         const sumPopulationAfterInsertion = sumPopulationForYear(dataBanco, 2018, 2020);
 
-        const [ { total: sumPopulationByQuery } ] = await db.query(
-            `SELECT SUM(
-                CAST(jsonb_extract_path_text(doc_record, 'Population') AS INTEGER)
-            ) as total
-            FROM ${DATABASE_SCHEMA}.api_data
-            WHERE doc_record->>'Year' >= '2018' AND doc_record->>'Year' <= '2020';`
-        );
+        const [ { total: sumPopulationByQuery } ] = await db.query(querySumpopulation);
 
         console.log(
             `
