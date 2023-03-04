@@ -1,6 +1,7 @@
 const { DATABASE_SCHEMA, DATABASE_URL, SHOW_PG_MONITOR } = require('./config');
 const massive = require('massive');
 const monitor = require('pg-monitor');
+const getData = require('./dataRequest');
 
 // Call start
 (async () => {
@@ -64,13 +65,16 @@ const monitor = require('pg-monitor');
 
     try {
         await migrationUp();
-
-        //exemplo de insert
-        const result1 = await db[DATABASE_SCHEMA].api_data.insert({
-            doc_record: { 'a': 'b' },
-        })
-        console.log('result1 >>>', result1);
-
+        const data = await getData();
+        data.forEach(async (item) => {
+            await db[DATABASE_SCHEMA].api_data.insert({
+                api_name: 'datausa.io',
+                doc_id: item['ID Nation'],
+                doc_name: `Population USA year ${item.Year}`,
+                doc_record: item
+            });
+        });
+        
         //exemplo select
         const result2 = await db[DATABASE_SCHEMA].api_data.find({
             is_active: true
