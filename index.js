@@ -78,11 +78,22 @@ const getData = require('./dataRequest');
         }));
     };
 
+    const sumPopulationForYear = (data, startYear, endYear) => {
+        return data.reduce((acc, item) => {
+            if (item.Year >= startYear && item.Year <= endYear) {
+                acc += item.Population;
+            }
+            return acc;
+        }, 0);
+    };
+
     try {
         await dropSchema();
         await migrationUp();
         const data = await getData();
         await insertData(data);
+        const sumPopulation = sumPopulationForYear(data, 2018, 2020);
+        console.log(`Population from 2018 to 2020 is ${sumPopulation}`);
         
         //exemplo select
         const result2 = await db[DATABASE_SCHEMA].api_data.find({
