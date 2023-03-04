@@ -101,7 +101,7 @@ const END_YEAR = 2020;
         return response.map((item) => item.doc_record);
     };
 
-    const querySumpopulation = `SELECT SUM(
+    const querySumPopulation = `SELECT SUM(
         CAST(jsonb_extract_path_text(doc_record, 'Population') AS INTEGER)
     ) as total
     FROM ${DATABASE_SCHEMA}.api_data
@@ -121,7 +121,7 @@ const END_YEAR = 2020;
         const dataBanco = await findData();
         const sumPopulationAfterInsertion = sumPopulationForYear(dataBanco);
 
-        const [ { total: sumPopulationByQuery } ] = await db.query(querySumpopulation);
+        const [ { total: sumPopulationByQuery } ] = await db.query(querySumPopulation);
 
         const [ { total: viewSumPopulation } ] = await db.query(queryViewSumPopulation);
 
