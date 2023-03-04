@@ -97,16 +97,33 @@ const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=
     try {
         await dropSchema();
         await migrationUp();
+
         const data = await getData();
+        const sumPopulationBeforeInsertion = sumPopulationForYear(data, 2018, 2020);
+
         await insertData(data);
-        const sumPopulation = sumPopulationForYear(data, 2018, 2020);
-        console.log(`Population from 2018 to 2020 is ${sumPopulation}`);
-        
-        //exemplo select
-        const result2 = await db[DATABASE_SCHEMA].api_data.find({
-            is_active: true
-        });
-        console.log('result2 >>>', result2);
+
+        const responseMassive = await db[DATABASE_SCHEMA].api_data.find({ is_active: true });
+        const extractedYearsInformations = responseMassive.map((item) => item.doc_record);
+        const sumPopulationAfterInsertion = sumPopulationForYear(
+            extractedYearsInformations, 2018, 2020
+        );
+
+        const [ { total: sumPopulationByQuery } ] = await db.query(
+            `SELECT SUM(
+                CAST(jsonb_extract_path_text(doc_record, 'Population') AS INTEGER)
+            ) as total
+            FROM ${DATABASE_SCHEMA}.api_data
+            WHERE doc_record->>'Year' >= '2018' AND doc_record->>'Year' <= '2020';`
+        );
+
+        console.log(
+            `
+            The sum of the population Before insertion is: ${sumPopulationBeforeInsertion}
+            The sum of the population After insertion is: ${sumPopulationAfterInsertion}
+            The sum of the population by query is: ${sumPopulationByQuery}
+            `
+        );
 
     } catch (e) {
         console.log(e.message)
