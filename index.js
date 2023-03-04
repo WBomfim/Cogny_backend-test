@@ -46,6 +46,10 @@ const getData = require('./dataRequest');
             resolve();
         });
     };
+    
+    const dropSchema = async () => {
+        await db.dropSchema(DATABASE_SCHEMA, { cascade: true });
+    };
 
     //public
     const migrationUp = async () => {
@@ -75,6 +79,7 @@ const getData = require('./dataRequest');
     };
 
     try {
+        await dropSchema();
         await migrationUp();
         const data = await getData();
         await insertData(data);
