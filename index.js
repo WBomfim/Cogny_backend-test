@@ -4,6 +4,8 @@ const massive = require('massive');
 const monitor = require('pg-monitor');
 
 const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=Population";
+const START_YEAR = 2018;
+const END_YEAR = 2020;
 
 // Call start
 (async () => {
@@ -85,9 +87,9 @@ const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=
         }));
     };
 
-    const sumPopulationForYear = (data, startYear, endYear) => {
+    const sumPopulationForYear = (data) => {
         return data.reduce((acc, item) => {
-            if (item.Year >= startYear && item.Year <= endYear) {
+            if (item.Year >= START_YEAR && item.Year <= END_YEAR) {
                 acc += item.Population;
             }
             return acc;
@@ -103,27 +105,28 @@ const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=
         CAST(jsonb_extract_path_text(doc_record, 'Population') AS INTEGER)
     ) as total
     FROM ${DATABASE_SCHEMA}.api_data
-    WHERE doc_record->>'Year' >= '2018' AND doc_record->>'Year' <= '2020';`
+    WHERE doc_record->>'Year' >= '${START_YEAR}' AND doc_record->>'Year' <= '${END_YEAR}';`
 
     try {
         await dropSchema();
         await migrationUp();
 
         const dataApi = await getData();
-        const sumPopulationBeforeInsertion = sumPopulationForYear(dataApi, 2018, 2020);
+        const sumPopulationBeforeInsertion = sumPopulationForYear(dataApi);
 
         await insertData(dataApi);
 
         const dataBanco = await findData();
-        const sumPopulationAfterInsertion = sumPopulationForYear(dataBanco, 2018, 2020);
+        const sumPopulationAfterInsertion = sumPopulationForYear(dataBanco);
 
         const [ { total: sumPopulationByQuery } ] = await db.query(querySumpopulation);
 
         console.log(
             `
-            The sum of the population Before insertion is: ${sumPopulationBeforeInsertion}
-            The sum of the population After insertion is: ${sumPopulationAfterInsertion}
-            The sum of the population by query is: ${sumPopulationByQuery}
+            Sum population between years ${START_YEAR} to ${END_YEAR}:
+            > The sum Before insertion is: ${sumPopulationBeforeInsertion}
+            > The sum After insertion is: ${sumPopulationAfterInsertion}
+            > The sum by query is: ${sumPopulationByQuery}
             `
         );
 
