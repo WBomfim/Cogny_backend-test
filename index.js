@@ -107,6 +107,8 @@ const END_YEAR = 2020;
     FROM ${DATABASE_SCHEMA}.api_data
     WHERE doc_record->>'Year' >= '${START_YEAR}' AND doc_record->>'Year' <= '${END_YEAR}';`
 
+    const queryViewSumPopulation = `SELECT * FROM ${DATABASE_SCHEMA}.vw_total_population;`
+
     try {
         await dropSchema();
         await migrationUp();
@@ -121,12 +123,15 @@ const END_YEAR = 2020;
 
         const [ { total: sumPopulationByQuery } ] = await db.query(querySumpopulation);
 
+        const [ { total: viewSumPopulation } ] = await db.query(queryViewSumPopulation);
+
         console.log(
             `
             Sum population between years ${START_YEAR} to ${END_YEAR}:
             > The sum Before insertion is: ${sumPopulationBeforeInsertion}
             > The sum After insertion is: ${sumPopulationAfterInsertion}
             > The sum by query is: ${sumPopulationByQuery}
+            > The sum by view is: ${viewSumPopulation}
             `
         );
 
