@@ -63,17 +63,21 @@ const getData = require('./dataRequest');
         });
     };
 
-    try {
-        await migrationUp();
-        const data = await getData();
-        data.forEach(async (item) => {
-            await db[DATABASE_SCHEMA].api_data.insert({
+    const insertData = async (data) => {
+        await Promise.all(data.map((item) => {
+            return db[DATABASE_SCHEMA].api_data.insert({
                 api_name: 'datausa.io',
                 doc_id: item['ID Nation'],
                 doc_name: `Population USA year ${item.Year}`,
                 doc_record: item
             });
-        });
+        }));
+    };
+
+    try {
+        await migrationUp();
+        const data = await getData();
+        await insertData(data);
         
         //exemplo select
         const result2 = await db[DATABASE_SCHEMA].api_data.find({
