@@ -94,20 +94,22 @@ const URL_API_DATAUSA = "https://datausa.io/api/data?drilldowns=Nation&measures=
         }, 0);
     };
 
+    const findData = async () => {
+        const response = await db[DATABASE_SCHEMA].api_data.find({ is_active: true });
+        return response.map((item) => item.doc_record);
+    };
+
     try {
         await dropSchema();
         await migrationUp();
 
-        const data = await getData();
-        const sumPopulationBeforeInsertion = sumPopulationForYear(data, 2018, 2020);
+        const dataApi = await getData();
+        const sumPopulationBeforeInsertion = sumPopulationForYear(dataApi, 2018, 2020);
 
-        await insertData(data);
+        await insertData(dataApi);
 
-        const responseMassive = await db[DATABASE_SCHEMA].api_data.find({ is_active: true });
-        const extractedYearsInformations = responseMassive.map((item) => item.doc_record);
-        const sumPopulationAfterInsertion = sumPopulationForYear(
-            extractedYearsInformations, 2018, 2020
-        );
+        const dataBanco = await findData();
+        const sumPopulationAfterInsertion = sumPopulationForYear(dataBanco, 2018, 2020);
 
         const [ { total: sumPopulationByQuery } ] = await db.query(
             `SELECT SUM(
